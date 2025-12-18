@@ -16,9 +16,11 @@ verus-proof-time-testing/
 ├── rust-toolchain.toml     # Rust 1.91.0
 ├── src/
 │   ├── lib.rs              # Module bindings
-│   └── minmax.rs           # Verus-verified functions
+│   ├── minmax.rs           # Verus-verified min/max functions
+│   └── set_x.rs            # Hash set wrapper with iterator and macro
 ├── tests/
-│   └── test_minmax.rs      # Normal Rust runtime tests
+│   ├── test_minmax.rs      # Runtime tests for minmax
+│   └── test_set_x.rs       # Runtime tests for SetX
 ├── target/verus/           # Compiled library for proof tests
 │   ├── libverus_proof_time_testing.rlib
 │   └── verus_proof_time_testing.vir
@@ -27,7 +29,8 @@ verus-proof-time-testing/
     ├── rust-toolchain.toml
     └── tests/
         ├── common/mod.rs   # Test harness
-        └── prove_me.rs     # Proof tests
+        ├── prove_me.rs     # Proof tests for minmax
+        └── prove_set_x.rs  # Proof tests for SetX
 ```
 
 ## From Checkout to Running Everything
@@ -41,7 +44,7 @@ verus --crate-type=lib src/lib.rs
 
 Expected output:
 ```
-verification results:: 5 verified, 0 errors
+verification results:: 6 verified, 0 errors
 ```
 
 ### 2. Run Runtime Tests
@@ -54,11 +57,9 @@ cargo test
 
 Expected output:
 ```
-running 7 tests
-test test_max_x_basic ... ok
-test test_min_x_basic ... ok
-...
-test result: ok. 7 passed
+running 7 tests (test_minmax)
+running 8 tests (test_set_x)
+test result: ok. 15 passed
 ```
 
 ### 3. Build Library for Proof Tests
@@ -81,29 +82,49 @@ This creates:
 
 ```bash
 cd rust_verify_test
-cargo test
+cargo test --test prove_me
+cargo test --test prove_set_x
 ```
 
 Expected output:
 ```
-running 10 tests
-test test_use_library_max_x ... ok
-test test_use_library_min_x ... ok
-test test_use_library_lemmas ... ok
-test test_wrong_assertion_fails ... ok
-test one_proof_test_that_really_fails ... FAILED
-...
-test result: FAILED. 9 passed; 1 failed
+prove_me: 9 passed; 1 failed (intentional)
+prove_set_x: 4 passed
 ```
 
-These tests import the library directly:
+## Library Features
+
+### minmax.rs — Simple verified functions
+
 ```rust
 use verus_proof_time_testing::minmax::*;
 
-fn test_max_x() {
-    let m = max_x(3, 5);
-    assert(m == 5);
+let m = max_x(3, 5);  // Returns 5
+assert_eq!(m, 5);
+```
+
+### set_x.rs — Hash set with iterator and macro
+
+Demonstrates:
+- **View trait** for spec-level reasoning
+- **Iterator** with std::iter::Iterator for cargo compatibility
+- **Conditional compilation** with `#[cfg(verus_keep_ghost)]`
+- **Macro** for convenient literals
+
+```rust
+use verus_proof_time_testing::set_x::*;
+use verus_proof_time_testing::set_x_lit;
+
+// Using the macro
+let s = set_x_lit![1, 2, 3];
+assert_eq!(s.size(), 3);
+assert!(s.mem(&2));
+
+// Using the iterator (works with cargo test)
+for &x in s.iter() {
+    println!("{}", x);
 }
+let sum: i32 = s.iter().sum();
 ```
 
 ## Quick Reference
@@ -113,7 +134,8 @@ fn test_max_x() {
 | Verify library | `verus --crate-type=lib src/lib.rs` |
 | Runtime tests | `cargo test` |
 | Build for proof tests | See step 3 above |
-| Proof tests | `cd rust_verify_test && cargo test` |
+| Proof tests (minmax) | `cd rust_verify_test && cargo test --test prove_me` |
+| Proof tests (set_x) | `cd rust_verify_test && cargo test --test prove_set_x` |
 
 ## Writing Tests
 
@@ -122,11 +144,14 @@ fn test_max_x() {
 Standard Rust tests using the library:
 
 ```rust
-use verus_proof_time_testing::minmax::*;
+use verus_proof_time_testing::set_x::*;
+use verus_proof_time_testing::set_x_lit;
 
 #[test]
-fn test_max_x() {
-    assert_eq!(max_x(3, 5), 5);
+fn test_set_operations() {
+    let s = set_x_lit![1, 2, 3];
+    assert_eq!(s.size(), 3);
+    assert!(s.mem(&2));
 }
 ```
 
@@ -135,28 +160,17 @@ fn test_max_x() {
 Verification tests using `test_verify_one_file!`:
 
 ```rust
-// Expected to verify successfully
 test_verify_one_file! {
-    #[test] test_name verus_code! {
+    #[test] test_set_x_insert verus_code! {
         use vstd::prelude::*;
-        use verus_proof_time_testing::minmax::*;
+        use verus_proof_time_testing::set_x::*;
 
-        fn test() {
-            let m = max_x(3, 5);
-            assert(m == spec_max_x(3, 5));
+        fn test_insert() {
+            let mut s: SetX<i32> = SetX::empty();
+            let _ = s.insert(42);
+            proof { assert(s@.contains(42)); }
         }
     } => Ok(())
-}
-
-// Expected to fail verification (test PASSES when verification fails)
-test_verify_one_file! {
-    #[test] test_should_fail verus_code! {
-        use vstd::prelude::*;
-
-        fn broken() {
-            assert(1 == 2); // FAILS
-        }
-    } => Err(err) => assert_one_fails(err)
 }
 ```
 
@@ -167,7 +181,6 @@ When verification fails as expected, the **test passes** (shows "ok"):
 
 ```
 test test_wrong_assertion_fails ... ok    ← Verification failed, as expected
-test test_precondition_fails ... ok       ← Verification failed, as expected
 ```
 
 A test only shows **FAILED** when reality doesn't match expectation:
@@ -179,8 +192,7 @@ A test only shows **FAILED** when reality doesn't match expectation:
 | `=> Err(err) => assert_one_fails(err)` | Verification fails | ok |
 | `=> Err(err) => assert_one_fails(err)` | Verification succeeds | **FAILED** |
 
-The test `one_proof_test_that_really_fails` demonstrates the last case — it expects
-failure but verification succeeds, so the test itself fails.
+The test `one_proof_test_that_really_fails` demonstrates the last case.
 
 ## Configuration
 

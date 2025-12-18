@@ -7,7 +7,7 @@ edition = "2024"
 verify = true
 
 [dependencies]
-vstd = "0.0.0-2025-08-12-1837"
+vstd = { version = "0.0.0-2025-08-12-1837", features = ["alloc", "std"] }
 
 [lib]
 path = "src/lib.rs"
@@ -15,6 +15,10 @@ path = "src/lib.rs"
 [[test]]
 name = "test_minmax"
 path = "tests/test_minmax.rs"
+
+[[test]]
+name = "test_set_x"
+path = "tests/test_set_x.rs"
 
 [dev-dependencies]
 
@@ -24,6 +28,6 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(verus_keep_ghost)', 'cfg(v
 [workspace]
 members = ["."]
 
-# Use local Verus for vstd (for rust-analyzer navigation)
+# Use local Verus for vstd
 [patch.crates-io]
 vstd = { path = "/home/milnes/projects/verus-lang/source/vstd" }
