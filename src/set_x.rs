@@ -24,19 +24,6 @@
 //! ```
 //!
 //! This works for both Verus verification AND `cargo test` without code duplication.
-//!
-//! ## Anti-pattern (avoid this):
-//!
-//! ```ignore
-//! verus! {
-//!     impl<'a, T> MyIter<'a, T> {
-//!         pub fn next(&mut self) -> ... { self.inner.next() }  // Verus method
-//!     }
-//! }
-//! impl<'a, T> std::iter::Iterator for MyIter<'a, T> {
-//!     fn next(&mut self) -> ... { self.inner.next() }  // DUPLICATED!
-//! }
-//! ```
 
 use vstd::prelude::*;
 use std::collections::HashSet;

@@ -226,20 +226,6 @@ verus! {
 This works for **both** Verus verification **and** `cargo test` without duplicating the
 `next()` implementation.
 
-**Anti-pattern (avoid):**
-
-```rust
-verus! {
-    impl<'a, T> MyIter<'a, T> {
-        pub fn next(&mut self) -> ... { self.inner.next() }  // Verus method
-    }
-}
-// WRONG: Duplicates the body
-impl<'a, T> std::iter::Iterator for MyIter<'a, T> {
-    fn next(&mut self) -> ... { self.inner.next() }  // Same code again!
-}
-```
-
 ### Conditional Imports
 
 Some `vstd` modules only exist during Verus verification:
