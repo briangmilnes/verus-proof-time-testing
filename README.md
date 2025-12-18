@@ -209,6 +209,23 @@ cd rust_verify_test
 RUST_TEST_THREADS=1 cargo test
 ```
 
+## Run All Steps
+
+A script automates the entire workflow:
+
+```bash
+./scripts/walkthesteps.sh
+
+# Or with custom Verus path:
+VERUS=/path/to/verus ./scripts/walkthesteps.sh
+```
+
+This cleans, verifies, runs all tests, and reports results.
+
+**Note:** You'll see "running 0 tests" for `src/lib.rs`—this is normal. Cargo looks for
+unit tests inside `#[cfg(test)]` modules in `src/`, but all tests here are integration
+tests in the `tests/` directory.
+
 ## License
 
 MIT
