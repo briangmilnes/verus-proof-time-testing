@@ -1,0 +1,8 @@
+Logging to: /home/milnes/projects/verus-proof-time-testing/rust_verify_test/analyses/veracity-search.log
+Verus Search
+============
+
+Pattern: fn spec_max
+Searching: /home/milnes/projects/verus/source/vstd
+Files: 87, Functions: 2138, Matches: 0
+

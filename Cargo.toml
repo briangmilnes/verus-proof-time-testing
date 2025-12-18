@@ -1,0 +1,29 @@
+[package]
+name = "verus_proof_time_testing"
+version = "0.1.0"
+edition = "2024"
+
+[package.metadata.verus]
+verify = true
+
+[dependencies]
+vstd = "0.0.0-2025-08-12-1837"
+
+[lib]
+path = "src/lib.rs"
+
+[[test]]
+name = "test_minmax"
+path = "tests/test_minmax.rs"
+
+[dev-dependencies]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(verus_keep_ghost)', 'cfg(verus_keep_ghost_body)'] }
+
+[workspace]
+members = ["."]
+
+# Use local Verus for vstd (for rust-analyzer navigation)
+[patch.crates-io]
+vstd = { path = "/home/milnes/projects/verus-lang/source/vstd" }

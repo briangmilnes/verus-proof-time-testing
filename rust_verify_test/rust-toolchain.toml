@@ -1,0 +1,4 @@
+# rust_verify_test_macros uses #![feature(proc_macro_span)] which requires nightly.
+# vargo handles this internally; for standalone use we need nightly.
+[toolchain]
+channel = "nightly"
