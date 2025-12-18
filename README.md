@@ -107,7 +107,7 @@ assert_eq!(m, 5);
 
 Demonstrates:
 - **View trait** for spec-level reasoning
-- **Iterator** with std::iter::Iterator for cargo compatibility
+- **Iterator** implementing `std::iter::Iterator` inside `verus!` (no duplication)
 - **Conditional compilation** with `#[cfg(verus_keep_ghost)]`
 - **Macro** for convenient literals
 
@@ -193,6 +193,77 @@ A test only shows **FAILED** when reality doesn't match expectation:
 | `=> Err(err) => assert_one_fails(err)` | Verification succeeds | **FAILED** |
 
 The test `one_proof_test_that_really_fails` demonstrates the last case.
+
+## Verus Patterns
+
+### Iterator Without Code Duplication
+
+Verus can verify `impl Trait` blocks inside `verus!`. This means you can implement
+`std::iter::Iterator` directly inside `verus!` with specs on `next()`:
+
+```rust
+verus! {
+    impl<'a, T: ...> std::iter::Iterator for SetXIter<'a, T> {
+        type Item = &'a T;
+
+        fn next(&mut self) -> (result: Option<&'a T>)
+            ensures ({
+                // Verus specs here
+                let (old_idx, old_seq) = old(self)@;
+                match result {
+                    None => old_idx >= old_seq.len(),
+                    Some(elem) => elem == old_seq[old_idx],
+                }
+            })
+        {
+            self.inner.next()
+        }
+    }
+}
+// NO separate impl needed outside verus!
+```
+
+This works for **both** Verus verification **and** `cargo test` without duplicating the
+`next()` implementation.
+
+**Anti-pattern (avoid):**
+
+```rust
+verus! {
+    impl<'a, T> MyIter<'a, T> {
+        pub fn next(&mut self) -> ... { self.inner.next() }  // Verus method
+    }
+}
+// WRONG: Duplicates the body
+impl<'a, T> std::iter::Iterator for MyIter<'a, T> {
+    fn next(&mut self) -> ... { self.inner.next() }  // Same code again!
+}
+```
+
+### Conditional Imports
+
+Some `vstd` modules only exist during Verus verification:
+
+```rust
+#[cfg(verus_keep_ghost)]
+use vstd::std_specs::hash::obeys_key_model;
+
+#[cfg(verus_keep_ghost)]
+use vstd::std_specs::hash::SetIterAdditionalSpecFns;
+```
+
+### external_body for stdlib operations
+
+Use `#[verifier::external_body]` for operations that call stdlib methods without Verus specs:
+
+```rust
+#[verifier::external_body]
+pub fn size(&self) -> (n: usize)
+    ensures n == self@.len()
+{
+    self.m.len()  // HashSet::len() - trust the postcondition
+}
+```
 
 ## Configuration
 

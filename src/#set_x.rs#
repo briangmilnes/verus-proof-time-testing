@@ -1,42 +1,7 @@
 //! Simple hash set wrapper demonstrating Verus patterns:
-//! - Hash set with View trait
-//! - Iterator implementing std::iter::Iterator INSIDE verus! (no duplication)
+//! - Hash set with View
+//! - Iterator with std::iter::Iterator for cargo
 //! - Macro for literals
-//!
-//! ## Key Pattern: Iterator Without Duplication
-//!
-//! Verus can verify `impl Trait` blocks when inside `verus!`. This means you can
-//! implement `std::iter::Iterator` directly inside `verus!` with specs on `next()`:
-//!
-//! ```ignore
-//! verus! {
-//!     impl<'a, T: ...> std::iter::Iterator for MyIter<'a, T> {
-//!         type Item = &'a T;
-//!         
-//!         fn next(&mut self) -> (result: Option<&'a T>)
-//!             ensures ({ ... specs ... })
-//!         {
-//!             self.inner.next()
-//!         }
-//!     }
-//! }
-//! // NO separate impl needed outside verus!
-//! ```
-//!
-//! This works for both Verus verification AND `cargo test` without code duplication.
-//!
-//! ## Anti-pattern (avoid this):
-//!
-//! ```ignore
-//! verus! {
-//!     impl<'a, T> MyIter<'a, T> {
-//!         pub fn next(&mut self) -> ... { self.inner.next() }  // Verus method
-//!     }
-//! }
-//! impl<'a, T> std::iter::Iterator for MyIter<'a, T> {
-//!     fn next(&mut self) -> ... { self.inner.next() }  // DUPLICATED!
-//! }
-//! ```
 
 use vstd::prelude::*;
 use std::collections::HashSet;
@@ -64,7 +29,7 @@ impl<T: View + Clone + Eq + Hash> View for SetX<T> {
     open spec fn view(&self) -> Self::V { self.m@.map(|k: T| k@) }
 }
 
-/// Iterator over SetX - wraps std::collections::hash_set::Iter
+/// Iterator over SetX
 #[verifier::reject_recursive_types(T)]
 pub struct SetXIter<'a, T: View + Clone + Eq + Hash> {
     pub inner: std::collections::hash_set::Iter<'a, T>,
@@ -75,13 +40,8 @@ impl<'a, T: View + Clone + Eq + Hash> View for SetXIter<'a, T> {
     open spec fn view(&self) -> (int, Seq<T>) { self.inner@ }
 }
 
-/// Implement std::iter::Iterator INSIDE verus! block.
-/// This provides specs for verification AND works with cargo test.
-/// No separate impl outside verus! needed - avoids code duplication.
-impl<'a, T: View + Clone + Eq + Hash> std::iter::Iterator for SetXIter<'a, T> {
-    type Item = &'a T;
-
-    fn next(&mut self) -> (result: Option<&'a T>)
+impl<'a, T: View + Clone + Eq + Hash> SetXIter<'a, T> {
+    pub fn next(&mut self) -> (result: Option<&'a T>)
         ensures ({
             let (old_idx, old_seq) = old(self)@;
             match result {
@@ -142,6 +102,12 @@ impl<T: View + Clone + Eq + Hash> SetX<T> {
 }
 
 } // verus!
+
+// std::iter::Iterator for cargo test compatibility
+impl<'a, T: View + Clone + Eq + Hash> std::iter::Iterator for SetXIter<'a, T> {
+    type Item = &'a T;
+    fn next(&mut self) -> Option<Self::Item> { self.inner.next() }
+}
 
 /// Macro for SetX literals
 #[macro_export]
