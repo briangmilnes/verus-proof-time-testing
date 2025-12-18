@@ -21,6 +21,8 @@ verus-proof-time-testing/
 ├── tests/
 │   ├── test_minmax.rs      # Runtime tests for minmax
 │   └── test_set_x.rs       # Runtime tests for SetX
+├── benches/
+│   └── bench_set_x.rs      # Simple benchmarks
 ├── target/verus/           # Compiled library for proof tests
 │   ├── libverus_proof_time_testing.rlib
 │   └── verus_proof_time_testing.vir
@@ -92,6 +94,21 @@ prove_me: 9 passed; 1 failed (intentional)
 prove_set_x: 4 passed
 ```
 
+### 5. Run Benchmarks
+
+```bash
+cargo bench
+```
+
+Expected output:
+```
+SetX Benchmarks
+═══════════════
+insert 100 x 1000:  ~3ms
+mem 100 x 10000:    ~8ms
+iter sum x 10000:   ~50ns
+```
+
 ## Library Features
 
 ### minmax.rs — Simple verified functions
@@ -136,6 +153,7 @@ let sum: i32 = s.iter().sum();
 | Build for proof tests | See step 3 above |
 | Proof tests (minmax) | `cd rust_verify_test && cargo test --test prove_me` |
 | Proof tests (set_x) | `cd rust_verify_test && cargo test --test prove_set_x` |
+| Benchmarks | `cargo bench` |
 
 ## Writing Tests
 

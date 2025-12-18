@@ -67,6 +67,15 @@ else
     exit 1
 fi
 
+cd "$PROJECT_DIR"
+
+echo ""
+echo "════════════════════════════════════════════════════════════════"
+echo "Step 5: Run Benchmarks"
+echo "════════════════════════════════════════════════════════════════"
+cargo bench
+echo "✓ Benchmarks complete"
+
 echo ""
 echo "════════════════════════════════════════════════════════════════"
 echo "All steps completed successfully!"

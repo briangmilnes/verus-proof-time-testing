@@ -22,6 +22,10 @@ path = "tests/test_set_x.rs"
 
 [dev-dependencies]
 
+[[bench]]
+name = "bench_set_x"
+harness = false
+
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(verus_keep_ghost)', 'cfg(verus_keep_ghost_body)'] }
 
