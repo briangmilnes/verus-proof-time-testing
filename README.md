@@ -1,6 +1,18 @@
 # Verus Proof Time Testing
 
-A project demonstrating Verus verification with both runtime tests and proof tests.
+A project demonstrating Verus verification tests outside of verus-lang, coexisting with benchmarks and standard Rust tests.
+
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Project Structure](#project-structure)
+- [From Checkout to Running Everything](#from-checkout-to-running-everything)
+- [Library Features](#library-features)
+- [Quick Reference](#quick-reference)
+- [Writing Tests](#writing-tests)
+- [Verus Patterns](#verus-patterns)
+- [Configuration](#configuration)
+- [Run All Steps](#run-all-steps)
 
 ## Prerequisites
 
