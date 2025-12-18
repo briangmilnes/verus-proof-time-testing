@@ -135,13 +135,13 @@ test_verify_one_file! {
     } => Err(err) => assert_one_fails(err)
 }
 
-// This test ACTUALLY FAILS - verification succeeds but we wrongly expect failure.
+// This test ACTUALLY FAILS - verification fails but test expects success.
 test_verify_one_file! {
     #[test] one_proof_test_that_really_fails verus_code! {
         use vstd::prelude::*;
 
-        fn this_is_fine() {
-            assert(1 + 1 == 2); // This verifies successfully!
+        fn this_is_wrong() {
+            assert(1 + 1 == 3); // Verus FAILS this
         }
-    } => Err(err) => assert_one_fails(err)  // But we wrongly expect failure
+    } => Ok(())  // But test expects success - real test failure
 }
