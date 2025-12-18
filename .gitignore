@@ -1,2 +1,7 @@
 /target/
 /rust_verify_test/target/
+
+# Emacs backup files
+*~
+\#*\#
+.#*
